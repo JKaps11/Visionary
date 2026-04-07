@@ -1,24 +1,62 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import Constants from "expo-constants";
+import { useFonts, IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "react-native-reanimated";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { Colors } from "@/constants/theme";
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// CONVEX_URL is read from expo-constants (app.json extra.convexUrl) or from
+// EXPO_PUBLIC_CONVEX_URL at build time. Set one of these after running
+// `bunx convex dev` to create the deployment.
+const CONVEX_URL =
+  (Constants.expoConfig?.extra?.convexUrl as string | undefined) ??
+  process.env.EXPO_PUBLIC_CONVEX_URL ??
+  "";
+
+const convex = new ConvexReactClient(CONVEX_URL, {
+  // Unsaved optimistic updates disabled in v1. Convex handles the reactive
+  // archive update on mutation success, which is fast enough.
+  unsavedChangesWarning: false,
+});
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({ IBMPlexMono_400Regular });
+
+  useEffect(() => {
+    if (!CONVEX_URL) {
+      console.warn(
+        "Convex URL is not set. Run `bunx convex dev` in apps/backend and " +
+          "set EXPO_PUBLIC_CONVEX_URL before starting the app.",
+      );
+    }
+  }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ConvexProvider client={convex}>
+      <GestureHandlerRootView style={styles.root}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Colors.background },
+            animation: "fade",
+          }}
+        />
+        <StatusBar style="light" />
+      </GestureHandlerRootView>
+    </ConvexProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+});
