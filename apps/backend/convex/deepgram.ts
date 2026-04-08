@@ -1,5 +1,6 @@
 "use node";
 
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
 import { action } from "./_generated/server";
@@ -27,7 +28,12 @@ export const transcribe = action({
     audio: v.bytes(),
     mimeType: v.string(),
   },
-  handler: async (_ctx, { audio, mimeType }) => {
+  handler: async (ctx, { audio, mimeType }) => {
+    // Gate Deepgram credit usage on a valid session — anonymous callers must
+    // not be able to invoke this action.
+    const userId = await getAuthUserId(ctx as any);
+    if (!userId) throw new Error("Not signed in");
+
     // `process` is provided by the Node runtime that backs `"use node"`
     // actions; the convex tsconfig doesn't ship Node types so we read it
     // through globalThis.
@@ -59,8 +65,18 @@ export const transcribe = action({
       };
     };
 
-    const transcript =
-      json.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "";
-    return transcript.trim();
+    const alt = json.results?.channels?.[0]?.alternatives?.[0];
+    if (alt?.transcript === undefined) {
+      // Surface malformed responses instead of returning a silent empty
+      // string — without this an upstream API change would look like a
+      // user holding the mic and saying nothing.
+      console.warn(
+        `Deepgram response missing transcript (status=${res.status}): ${JSON.stringify(
+          json,
+        ).slice(0, 500)}`,
+      );
+      return "";
+    }
+    return alt.transcript.trim();
   },
 });

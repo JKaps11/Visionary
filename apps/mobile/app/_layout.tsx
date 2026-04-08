@@ -44,13 +44,6 @@ export default function RootLayout() {
       <AccentProvider>
         <GestureHandlerRootView style={styles.root}>
           <AuthGate />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: Colors.background },
-              animation: "fade",
-            }}
-          />
           <StatusBar style="light" />
         </GestureHandlerRootView>
       </AccentProvider>
@@ -58,8 +51,11 @@ export default function RootLayout() {
   );
 }
 
-// Side-effect component: redirects to /sign-in when unauthenticated and back
-// to / once a session lands. Renders nothing.
+// Resolves auth state, redirects between /sign-in and /, and only mounts the
+// route Stack once auth is known. Mounting the Stack unconditionally would let
+// the protected index route (PageStack with its AppState commit listener) run
+// before auth is resolved and fire createThought() against an unauthenticated
+// session.
 function AuthGate() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const router = useRouter();
@@ -75,7 +71,17 @@ function AuthGate() {
     }
   }, [isAuthenticated, isLoading, onSignIn, router]);
 
-  return null;
+  if (isLoading) return null;
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: Colors.background },
+        animation: "fade",
+      }}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

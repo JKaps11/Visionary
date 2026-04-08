@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as config from "../config.js";
 import type * as deepgram from "../deepgram.js";
+import type * as http from "../http.js";
 import type * as thoughts from "../thoughts.js";
 
 import type {
@@ -19,8 +21,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   config: typeof config;
   deepgram: typeof deepgram;
+  http: typeof http;
   thoughts: typeof thoughts;
 }>;
 

@@ -59,15 +59,28 @@ export function MicButton({ onAppendText }: MicButtonProps) {
     if (recording || busy) return;
     const perm = await requestRecordingPermissionsAsync();
     if (!perm.granted) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void activateKeepAwakeAsync("voice-capture");
+    stoppedRef.current = false;
+    let prepared = false;
     try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      void activateKeepAwakeAsync("voice-capture");
-      stoppedRef.current = false;
       await recorder.prepareToRecordAsync();
+      prepared = true;
       recorder.record();
       setRecording(true);
     } catch (err) {
       console.error("Failed to start recording:", err);
+      // If prepare succeeded but record() threw, the native session is open
+      // and would leak the mic until app restart — tear it down explicitly.
+      if (prepared) {
+        try {
+          await recorder.stop();
+        } catch (stopErr) {
+          console.error("Failed to release recorder after start error:", stopErr);
+        }
+      }
+      stoppedRef.current = false;
+      setRecording(false);
       deactivateKeepAwake("voice-capture");
     }
   }, [busy, recorder, recording]);
