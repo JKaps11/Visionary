@@ -1,20 +1,22 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// v1 schema — two tables, no AI, no audio, no links.
+// v1 schema. authTables ships the user, account, session, etc. tables that
+// @convex-dev/auth requires.
 //
-// Note: auth is intentionally NOT wired up in this pass. When @convex-dev/auth
-// is added later, the `users` table will be replaced with the auth users table
-// extended with `accentColor`. For v1 development we use a single anonymous
-// "config" row to hold the accent color setting.
+// `config` and `thoughts` are scoped per user via a `userId` ref so a user
+// only ever sees their own thoughts and settings.
 export default defineSchema({
-  // Singleton row holding the user's settings. One row, always.
-  config: defineTable({
-    accentColor: v.optional(v.string()),
-  }),
+  ...authTables,
 
-  // No explicit index needed — Convex orders by _creationTime by default.
+  config: defineTable({
+    userId: v.id("users"),
+    accentColor: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
+
   thoughts: defineTable({
+    userId: v.id("users"),
     content: v.string(),
-  }),
+  }).index("by_user", ["userId"]),
 });

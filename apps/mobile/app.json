@@ -20,7 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.joshlabs.visionary"
+      "package": "com.joshlabs.visionary",
+      "permissions": ["RECORD_AUDIO"]
     },
     "web": {
       "output": "static",
@@ -40,7 +41,12 @@
           }
         }
       ],
-      "expo-audio"
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Visionary uses the microphone to capture spoken thoughts."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

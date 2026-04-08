@@ -1,33 +1,21 @@
 import { useQuery } from "convex/react";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Polyline } from "react-native-svg";
 
 import { api } from "@visionary/backend/convex/_generated/api";
 import type { Doc } from "@visionary/backend/convex/_generated/dataModel";
 
 import { DayLabel } from "@/components/day-label";
 import { ThoughtCard } from "@/components/thought-card";
-import { Colors, DefaultAccent, Fonts, Spacing } from "@/constants/theme";
+import { Colors, Fonts, Spacing } from "@/constants/theme";
 
-// ArchivePage — reached by swipe-down-from-capture (later) or, for now, the
-// temporary "archive →" link on the capture page.
-//
-// Uses a live useQuery over thoughts.list — the list updates the moment a
-// new thought lands in Convex, no refetch.
+// Presentational archive surface. Reached by swipe-down from capture; the
+// return-up gesture is owned by the page-stack.
 
 type Thought = Doc<"thoughts">;
 
-// Flat list items: either a day header or a thought row.
 type Row =
   | { kind: "day"; key: string; label: string }
   | { kind: "thought"; key: string; thought: Thought };
@@ -73,7 +61,7 @@ function groupByDay(thoughts: Thought[], query: string): Row[] {
   return rows;
 }
 
-export default function ArchivePage() {
+export function ArchiveContent() {
   const router = useRouter();
   const thoughts = useQuery(api.thoughts.list);
   const [search, setSearch] = useState("");
@@ -122,34 +110,9 @@ export default function ArchivePage() {
             )
           }
           contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
         />
       )}
-
-      {/* Static bottom chevron indicator: swipe-up-to-return. */}
-      {/* Temporary tap target in lieu of the gesture. */}
-      <Link href="/" asChild>
-        <Pressable style={styles.returnIndicator} hitSlop={12}>
-          <Svg width={40} height={24} viewBox="0 0 40 24">
-            <Polyline
-              points="4,16 20,6 36,16"
-              fill="none"
-              stroke={DefaultAccent}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <Polyline
-              points="4,21 20,11 36,21"
-              fill="none"
-              stroke={DefaultAccent}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={0.6}
-            />
-          </Svg>
-        </Pressable>
-      </Link>
     </SafeAreaView>
   );
 }
@@ -181,11 +144,5 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontFamily: Fonts.mono,
     fontSize: 14,
-  },
-  returnIndicator: {
-    position: "absolute",
-    bottom: Spacing.lg,
-    alignSelf: "center",
-    padding: Spacing.sm,
   },
 });

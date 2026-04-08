@@ -9,6 +9,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@convex-dev/auth": "^0.0.91",
     "@expo-google-fonts/ibm-plex-mono": "^0.3.0",
     "@visionary/backend": "workspace:*",
     "convex": "^1.17.0",
