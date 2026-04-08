@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { StyleSheet, TextInput } from "react-native";
 
 import { Colors, Fonts } from "@/constants/theme";
@@ -23,6 +23,11 @@ export interface EditorProps {
   placeholder?: string;
 }
 
+export interface EditorHandle {
+  focus: () => void;
+  blur: () => void;
+}
+
 interface Selection {
   start: number;
   end: number;
@@ -31,8 +36,15 @@ interface Selection {
 const BULLET_RE = /^- (.*)$/;
 const NUMBERED_RE = /^(\d+)\. (.*)$/;
 
-export function Editor({ value, onChangeText, placeholder }: EditorProps) {
+export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
+  { value, onChangeText, placeholder },
+  outerRef,
+) {
   const ref = useRef<TextInput>(null);
+  useImperativeHandle(outerRef, () => ({
+    focus: () => ref.current?.focus(),
+    blur: () => ref.current?.blur(),
+  }));
   // `selection` is set to non-undefined only when we programmatically modify
   // the text and need to force the cursor somewhere specific. On the very
   // next user keystroke we clear it so native can take over again.
@@ -126,7 +138,7 @@ export function Editor({ value, onChangeText, placeholder }: EditorProps) {
       style={styles.input}
     />
   );
-}
+});
 
 const styles = StyleSheet.create({
   input: {

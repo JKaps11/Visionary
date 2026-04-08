@@ -1,26 +1,27 @@
 import Constants from "expo-constants";
 import { useFonts, IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+import { ConvexReactClient, useConvexAuth } from "convex/react";
+
+import { AccentProvider } from "@/context/accent";
+import { secureStorage } from "@/lib/secure-storage";
 import { Colors } from "@/constants/theme";
 
-// CONVEX_URL is read from expo-constants (app.json extra.convexUrl) or from
-// EXPO_PUBLIC_CONVEX_URL at build time. Set one of these after running
-// `bunx convex dev` to create the deployment.
+// CONVEX_URL is read from app.json `extra.convexUrl` or from
+// EXPO_PUBLIC_CONVEX_URL at build time.
 const CONVEX_URL =
   (Constants.expoConfig?.extra?.convexUrl as string | undefined) ??
   process.env.EXPO_PUBLIC_CONVEX_URL ??
   "";
 
 const convex = new ConvexReactClient(CONVEX_URL, {
-  // Unsaved optimistic updates disabled in v1. Convex handles the reactive
-  // archive update on mutation success, which is fast enough.
   unsavedChangesWarning: false,
 });
 
@@ -39,19 +40,42 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <ConvexProvider client={convex}>
-      <GestureHandlerRootView style={styles.root}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: Colors.background },
-            animation: "fade",
-          }}
-        />
-        <StatusBar style="light" />
-      </GestureHandlerRootView>
-    </ConvexProvider>
+    <ConvexAuthProvider client={convex} storage={secureStorage}>
+      <AccentProvider>
+        <GestureHandlerRootView style={styles.root}>
+          <AuthGate />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.background },
+              animation: "fade",
+            }}
+          />
+          <StatusBar style="light" />
+        </GestureHandlerRootView>
+      </AccentProvider>
+    </ConvexAuthProvider>
   );
+}
+
+// Side-effect component: redirects to /sign-in when unauthenticated and back
+// to / once a session lands. Renders nothing.
+function AuthGate() {
+  const { isLoading, isAuthenticated } = useConvexAuth();
+  const router = useRouter();
+  const segments = useSegments();
+  const onSignIn = segments[0] === "sign-in";
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated && !onSignIn) {
+      router.replace("/sign-in");
+    } else if (isAuthenticated && onSignIn) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoading, onSignIn, router]);
+
+  return null;
 }
 
 const styles = StyleSheet.create({
