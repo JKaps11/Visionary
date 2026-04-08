@@ -8,10 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAccent } from "@/context/accent";
 import { Colors, Fonts } from "@/constants/theme";
 
-// One-button sign-in. Google only for v1. The OAuth flow opens in an
-// in-app web view (`expo-web-browser`), which redirects back to the
-// app via the `visionary://` scheme configured in app.json.
-
 export default function SignInScreen() {
   const accent = useAccent();
   const { signIn } = useAuthActions();

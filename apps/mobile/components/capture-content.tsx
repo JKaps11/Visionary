@@ -6,11 +6,6 @@ import { Editor, type EditorHandle } from "@/components/editor";
 import { MicButton } from "@/components/mic-button";
 import { Colors, Spacing } from "@/constants/theme";
 
-// Presentational capture surface. The page-stack hosts the gestures, draft
-// state, and commit logic — this just renders the blank page.
-//
-// Per design: cursor + keyboard + mic. Nothing else.
-
 export interface CaptureContentProps {
   draft: string;
   onChangeDraft: (next: string) => void;

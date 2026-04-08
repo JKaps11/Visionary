@@ -13,11 +13,6 @@ import Animated, {
 import { useAccentControls } from "@/context/accent";
 import { Colors, Fonts, Spacing, type Accent } from "@/constants/theme";
 
-// Slide-in settings sheet. Driven by the same `progress` shared value that
-// the page-stack pan recognizer writes to (0 hidden → 1 fully shown).
-//
-// Contents per design: accent swatches, sign out, version. Nothing else.
-
 interface Props {
   progress: SharedValue<number>;
   duration: number;
@@ -46,8 +41,6 @@ export function SettingsSheet({ progress, duration }: Props) {
     pointerEvents: progress.value > 0.01 ? "auto" : "none",
   }));
 
-  // Swipe-left on the sheet dismisses it. We treat any leftward drag past
-  // a small threshold as a dismiss.
   const dismissPan = Gesture.Pan()
     .activeOffsetX([-15, 9999])
     .onUpdate((e) => {

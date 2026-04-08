@@ -7,8 +7,6 @@ export interface ThoughtCardProps {
   onPress?: () => void;
 }
 
-// A single thought in the archive list. One or two lines of mono text.
-// Tap to open ThoughtDetail.
 export function ThoughtCard({ content, onPress }: ThoughtCardProps) {
   return (
     <Pressable

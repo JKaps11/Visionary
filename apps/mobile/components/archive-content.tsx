@@ -11,41 +11,43 @@ import { DayLabel } from "@/components/day-label";
 import { ThoughtCard } from "@/components/thought-card";
 import { Colors, Fonts, Spacing } from "@/constants/theme";
 
-// Presentational archive surface. Reached by swipe-down from capture; the
-// return-up gesture is owned by the page-stack.
-
 type Thought = Doc<"thoughts">;
 
 type Row =
   | { kind: "day"; key: string; label: string }
   | { kind: "thought"; key: string; thought: Thought };
 
-function formatDayLabel(d: Date): string {
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const sameDay = (a: Date, b: Date) =>
+function isSameDay(a: Date, b: Date): boolean {
+  return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-  if (sameDay(d, today)) return "Today";
-  if (sameDay(d, yesterday)) return "Yesterday";
-  return d.toLocaleDateString(undefined, {
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatDayLabel(date: Date, today: Date, yesterday: Date): string {
+  if (isSameDay(date, today)) return "Today";
+  if (isSameDay(date, yesterday)) return "Yesterday";
+  return date.toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
 }
 
-function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
 function groupByDay(thoughts: Thought[], query: string): Row[] {
-  const q = query.trim().toLowerCase();
-  const filtered = q
-    ? thoughts.filter((t) => t.content.toLowerCase().includes(q))
+  const normalized = query.trim().toLowerCase();
+  const filtered = normalized
+    ? thoughts.filter((thought) => thought.content.toLowerCase().includes(normalized))
     : thoughts;
+
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
 
   const rows: Row[] = [];
   let currentDayKey: string | null = null;
@@ -53,7 +55,11 @@ function groupByDay(thoughts: Thought[], query: string): Row[] {
     const date = new Date(thought._creationTime);
     const key = dayKey(date);
     if (key !== currentDayKey) {
-      rows.push({ kind: "day", key: `day-${key}`, label: formatDayLabel(date) });
+      rows.push({
+        kind: "day",
+        key: `day-${key}`,
+        label: formatDayLabel(date, today, yesterday),
+      });
       currentDayKey = key;
     }
     rows.push({ kind: "thought", key: thought._id, thought });

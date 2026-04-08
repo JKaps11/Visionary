@@ -5,13 +5,6 @@ import { api } from "@visionary/backend/convex/_generated/api";
 
 import { AccentPalette, DefaultAccent, type Accent } from "@/constants/theme";
 
-// Accent context — single source of truth for the user-chosen accent color.
-//
-// Persistence lives on the Convex `config` table (one row, see backend
-// schema). The query is reactive, so changing the accent on one device
-// updates everywhere instantly. The default accent applies until the user
-// picks one in settings.
-
 interface AccentContextValue {
   accent: Accent;
   setAccent: (accent: Accent) => void;

@@ -7,10 +7,6 @@ import Animated, {
 
 import { useAccent } from "@/context/accent";
 
-// Accent-colored bar waveform driven by a `level` shared value (0..1) which
-// the recording status listener writes from `metering`. We render a row of
-// bars whose individual heights interpolate from a baseline up to the level.
-
 interface Props {
   level: SharedValue<number>;
 }
@@ -21,8 +17,6 @@ const BAR_GAP = 4;
 const BASE_H = 4;
 const MAX_H = 32;
 
-// Each bar amplitude is shaped by a fixed sine envelope so the middle bars
-// react more than the edges, giving the line a soft hump.
 const ENVELOPE: number[] = Array.from({ length: BAR_COUNT }, (_, i) => {
   const t = i / (BAR_COUNT - 1);
   return Math.sin(t * Math.PI);

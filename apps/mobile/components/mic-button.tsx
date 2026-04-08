@@ -17,13 +17,11 @@ import { api } from "@visionary/backend/convex/_generated/api";
 import { VoiceWaveform } from "@/components/voice-waveform";
 import { useAccent } from "@/context/accent";
 
-// MicButton — quiet at rest, transforms into the VoiceWaveform while
-// recording. The recorded clip is sent to the Convex `deepgram.transcribe`
-// action and the resulting text is appended to the editor draft via
-// `onAppendText`.
-
 const SIZE = 44;
 const ICON = 22;
+const METER_INTERVAL_MS = 80;
+const METER_DB_FLOOR = -50;
+const METER_DB_SILENT = -160;
 
 export interface MicButtonProps {
   onAppendText?: (text: string) => void;
@@ -41,17 +39,14 @@ export function MicButton({ onAppendText }: MicButtonProps) {
   const level = useSharedValue(0);
   const stoppedRef = useRef(false);
 
-  // Poll the recorder for metering values and write into the shared value
-  // that drives the waveform. The status callback only fires on lifecycle
-  // events; metering lives on the polled state.
   useEffect(() => {
     if (!recording) return;
     const id = setInterval(() => {
       const state = recorder.getStatus();
-      const db = state.metering ?? -160;
-      const norm = Math.max(0, Math.min(1, (db + 50) / 50));
+      const db = state.metering ?? METER_DB_SILENT;
+      const norm = Math.max(0, Math.min(1, (db - METER_DB_FLOOR) / -METER_DB_FLOOR));
       level.value = norm;
-    }, 80);
+    }, METER_INTERVAL_MS);
     return () => clearInterval(id);
   }, [level, recorder, recording]);
 
@@ -97,7 +92,6 @@ export function MicButton({ onAppendText }: MicButtonProps) {
       if (uri) {
         const file = new File(uri);
         const buffer = await file.arrayBuffer();
-        // m4a/aac on both platforms via HIGH_QUALITY preset.
         const text = await transcribe({
           audio: buffer,
           mimeType: "audio/mp4",
@@ -114,8 +108,6 @@ export function MicButton({ onAppendText }: MicButtonProps) {
     }
   }, [level, onAppendText, recorder, recording, transcribe]);
 
-  // While recording, a transparent full-screen Pressable swallows touches so
-  // any tap stops the recording.
   return (
     <>
       {recording ? (

@@ -6,7 +6,6 @@ export interface DayLabelProps {
   label: string;
 }
 
-// Small mono date header in the archive. Formatted upstream.
 export function DayLabel({ label }: DayLabelProps) {
   return <Text style={styles.label}>{label}</Text>;
 }

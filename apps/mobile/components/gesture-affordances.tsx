@@ -14,19 +14,18 @@ import Svg, { Polyline } from "react-native-svg";
 import { useAccent } from "@/context/accent";
 import { Fonts } from "@/constants/theme";
 
-// Three edge indicators on the capture page. Rendered only while a pan is in
-// progress and only while the dominant direction has been resolved.
-//
-// dominantDirection (read from the gesture): 0 none, 1 up, 2 down, 3 right.
-//
-// All animation work runs on the UI thread via shared values. The component
-// itself only sets up the loop on mount.
+export const Direction = {
+  None: 0,
+  Up: 1,
+  Down: 2,
+  Right: 3,
+} as const;
 
 interface Props {
   dominantDirection: SharedValue<number>;
 }
 
-const TRANSLATE = 8; // px the active indicator leans into its edge
+const TRANSLATE = 8;
 const SPRING = { duration: 150, easing: Easing.bezier(0.32, 0.72, 0.24, 1) };
 
 export function GestureAffordances({ dominantDirection }: Props) {
@@ -47,7 +46,7 @@ export function GestureAffordances({ dominantDirection }: Props) {
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Indicator
         edge="top"
-        direction={1}
+        direction={Direction.Up}
         dominant={dominantDirection}
         march={march}
         accent={accent}
@@ -55,7 +54,7 @@ export function GestureAffordances({ dominantDirection }: Props) {
       />
       <Indicator
         edge="bottom"
-        direction={2}
+        direction={Direction.Down}
         dominant={dominantDirection}
         march={march}
         accent={accent}
@@ -63,7 +62,7 @@ export function GestureAffordances({ dominantDirection }: Props) {
       />
       <Indicator
         edge="right"
-        direction={3}
+        direction={Direction.Right}
         dominant={dominantDirection}
         march={march}
         accent={accent}
@@ -92,7 +91,7 @@ function Indicator({
 }: IndicatorProps) {
   const containerStyle = useAnimatedStyle(() => {
     const isSelected = dominant.value === direction;
-    const isActive = dominant.value !== 0;
+    const isActive = dominant.value !== Direction.None;
     const opacity = withTiming(isActive ? (isSelected ? 1 : 0.6) : 0, SPRING);
     let tx = 0;
     let ty = 0;
@@ -110,7 +109,6 @@ function Indicator({
     };
   });
 
-  // Each chevron's opacity reads `march` with a stagger.
   const c0 = useChevronOpacity(march, dominant, direction, 0);
   const c1 = useChevronOpacity(march, dominant, direction, 0.11);
   const c2 = useChevronOpacity(march, dominant, direction, 0.22);
@@ -150,7 +148,6 @@ function useChevronOpacity(
   return useAnimatedStyle(() => {
     if (dominant.value !== direction) return { opacity: 0.6 };
     const t = (march.value + offset) % 1;
-    // 0.6 → 1.0 → 0.6 sinusoidal pulse
     const pulse = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(t * Math.PI * 2 - Math.PI / 2));
     return { opacity: pulse };
   });
