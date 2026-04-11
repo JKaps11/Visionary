@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet } from "react-native";
+import { TextInput } from "react-native-gesture-handler";
 
 import { Colors, Fonts } from "@/constants/theme";
 
@@ -105,6 +106,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       }}
       autoFocus
       multiline
+      scrollEnabled={false}
       placeholder={placeholder}
       placeholderTextColor={Colors.textMuted}
       selectionColor={Colors.text}

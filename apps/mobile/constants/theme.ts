@@ -4,7 +4,13 @@ export const Colors = {
   textMuted: "#888888",
 };
 
-export const AccentPalette = ["#B39CD0", "#FFC1CC", "#A8DADC"] as const;
+export const AccentPalette = [
+  "#B39CD0", // lavender
+  "#9CB4D0", // dusty blue
+  "#9CD0B3", // sage green
+  "#D0C49C", // warm sand
+  "#D09CB8", // muted rose
+] as const;
 export type Accent = (typeof AccentPalette)[number];
 export const DefaultAccent: Accent = AccentPalette[0];
 

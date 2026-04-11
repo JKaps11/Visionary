@@ -44,7 +44,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.center}>
-        <Text style={[styles.title, { color: Colors.text }]}>visionary</Text>
+        <Text style={[styles.title, { color: Colors.text }]}>Visionary</Text>
         <Pressable
           onPress={handleSignIn}
           disabled={busy}

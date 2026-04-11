@@ -18,7 +18,6 @@ export const Direction = {
   None: 0,
   Up: 1,
   Down: 2,
-  Right: 3,
 } as const;
 
 interface Props {
@@ -60,20 +59,12 @@ export function GestureAffordances({ dominantDirection }: Props) {
         accent={accent}
         label="archive"
       />
-      <Indicator
-        edge="right"
-        direction={Direction.Right}
-        dominant={dominantDirection}
-        march={march}
-        accent={accent}
-        label="settings"
-      />
     </View>
   );
 }
 
 interface IndicatorProps {
-  edge: "top" | "bottom" | "right";
+  edge: "top" | "bottom";
   direction: number;
   dominant: SharedValue<number>;
   march: SharedValue<number>;
@@ -93,17 +84,10 @@ function Indicator({
     const isSelected = dominant.value === direction;
     const isActive = dominant.value !== Direction.None;
     const opacity = withTiming(isActive ? (isSelected ? 1 : 0.6) : 0, SPRING);
-    let tx = 0;
-    let ty = 0;
-    if (isSelected) {
-      if (edge === "top") ty = -TRANSLATE;
-      else if (edge === "bottom") ty = TRANSLATE;
-      else if (edge === "right") tx = TRANSLATE;
-    }
+    const ty = isSelected ? (edge === "top" ? -TRANSLATE : TRANSLATE) : 0;
     return {
       opacity,
       transform: [
-        { translateX: withTiming(tx, SPRING) },
         { translateY: withTiming(ty, SPRING) },
       ],
     };
@@ -183,21 +167,39 @@ const positionStyles = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
-  right: {
-    position: "absolute",
-    right: 24,
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-  },
 });
 
 const rotations = {
   top: 0,
   bottom: 180,
-  right: 90,
 };
+
+export function ArchiveReturnIndicator() {
+  const accent = useAccent();
+
+  return (
+    <View pointerEvents="none" style={archiveStyles.container}>
+      <Chevron color={accent} />
+      <View style={styles.chevronGap}>
+        <Chevron color={accent} />
+      </View>
+      <View style={styles.chevronGap}>
+        <Chevron color={accent} />
+      </View>
+    </View>
+  );
+}
+
+const archiveStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    opacity: 0.5,
+  },
+});
 
 const styles = StyleSheet.create({
   indicator: {

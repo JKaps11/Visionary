@@ -8,7 +8,7 @@ import {
 } from "expo-audio";
 import { File } from "expo-file-system";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Svg, { Path, Rect } from "react-native-svg";
 
@@ -16,6 +16,7 @@ import { api } from "@visionary/backend/convex/_generated/api";
 
 import { VoiceWaveform } from "@/components/voice-waveform";
 import { useAccent } from "@/context/accent";
+import { Colors } from "@/constants/theme";
 
 const SIZE = 44;
 const ICON = 22;
@@ -54,6 +55,7 @@ export function MicButton({ onAppendText }: MicButtonProps) {
     if (recording || busy) return;
     const perm = await requestRecordingPermissionsAsync();
     if (!perm.granted) return;
+    Keyboard.dismiss();
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     void activateKeepAwakeAsync("voice-capture");
     stoppedRef.current = false;
@@ -131,7 +133,10 @@ export function MicButton({ onAppendText }: MicButtonProps) {
             disabled={busy}
             style={({ pressed }) => [
               styles.button,
-              { opacity: busy ? 0.3 : pressed ? 0.5 : 0.6 },
+              {
+                backgroundColor: accent,
+                opacity: busy ? 0.3 : pressed ? 0.7 : 1,
+              },
             ]}
             hitSlop={16}
           >
@@ -142,20 +147,20 @@ export function MicButton({ onAppendText }: MicButtonProps) {
                 width={6}
                 height={11}
                 rx={3}
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 fill="none"
               />
               <Path
                 d="M5 11a7 7 0 0 0 14 0"
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 fill="none"
               />
               <Path
                 d="M12 18v3"
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 strokeLinecap="round"
               />
@@ -176,6 +181,7 @@ const styles = StyleSheet.create({
   button: {
     width: SIZE,
     height: SIZE,
+    borderRadius: SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
   },

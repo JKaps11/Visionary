@@ -1,7 +1,8 @@
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { FlatList, TextInput } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@visionary/backend/convex/_generated/api";

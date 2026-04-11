@@ -16,11 +16,11 @@ import { api } from "@visionary/backend/convex/_generated/api";
 import { ArchiveContent } from "@/components/archive-content";
 import { CaptureContent } from "@/components/capture-content";
 import type { EditorHandle } from "@/components/editor";
-import { Direction, GestureAffordances } from "@/components/gesture-affordances";
+import { ArchiveReturnIndicator, Direction, GestureAffordances } from "@/components/gesture-affordances";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { Colors } from "@/constants/theme";
 
-const { height: H, width: W } = Dimensions.get("window");
+const { height: H } = Dimensions.get("window");
 
 const COMMIT_DISTANCE = 80;
 const COMMIT_VELOCITY = 800;
@@ -32,7 +32,6 @@ const ARCHIVE_RETURN_BAND = 120;
 const PAPER = Easing.bezier(0.32, 0.72, 0.24, 1);
 const TURN = { duration: 320, easing: PAPER };
 const SNAP = { duration: 200, easing: PAPER };
-const SETTINGS = { duration: 250, easing: PAPER };
 
 const Layer = {
   Capture: 0,
@@ -44,6 +43,7 @@ type LayerName = "capture" | "archive";
 export function PageStack() {
   const [draft, setDraft] = useState("");
   const [layer, setLayer] = useState<LayerName>("capture");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const draftRef = useRef(draft);
   const editorRef = useRef<EditorHandle>(null);
   useEffect(() => {
@@ -85,7 +85,6 @@ export function PageStack() {
 
   const progress = useSharedValue(0);
   const liftY = useSharedValue(0);
-  const settingsX = useSharedValue(0);
   const layerSV = useSharedValue(0);
   const dominantDirection = useSharedValue(0);
   const valid = useSharedValue(true);
@@ -104,7 +103,6 @@ export function PageStack() {
   const goCapture = useCallback(() => {
     setLayer("capture");
     layerSV.value = Layer.Capture;
-    // Refocus on the next tick so the focus call lands after layout settles.
     requestAnimationFrame(() => editorRef.current?.focus());
     haptic();
   }, [haptic, layerSV]);
@@ -135,28 +133,20 @@ export function PageStack() {
     .onUpdate((e) => {
       "worklet";
       if (!valid.value) return;
-      const ax = Math.abs(e.translationX);
       const ay = Math.abs(e.translationY);
-      const dist = Math.max(ax, ay);
+      const dist = ay;
 
       if (layerSV.value === Layer.Capture) {
         if (dist < AFFORDANCE_REVEAL) {
           dominantDirection.value = Direction.None;
           return;
         }
-        if (ay > ax) {
-          if (e.translationY < 0) {
-            dominantDirection.value = Direction.Up;
-            liftY.value = Math.max(e.translationY, -H);
-          } else {
-            dominantDirection.value = Direction.Down;
-            progress.value = Math.min(e.translationY / H, 1);
-          }
-        } else if (e.translationX > 0) {
-          dominantDirection.value = Direction.Right;
-          settingsX.value = Math.min(e.translationX / W, 1);
+        if (e.translationY < 0) {
+          dominantDirection.value = Direction.Up;
+          liftY.value = Math.max(e.translationY, -H);
         } else {
-          dominantDirection.value = Direction.None;
+          dominantDirection.value = Direction.Down;
+          progress.value = Math.min(e.translationY / H, 1);
         }
       } else {
         if (e.translationY < 0) {
@@ -171,7 +161,6 @@ export function PageStack() {
       if (!valid.value) {
         progress.value = withTiming(layerSV.value, SNAP);
         liftY.value = withTiming(0, SNAP);
-        settingsX.value = withTiming(0, SNAP);
         return;
       }
 
@@ -180,26 +169,18 @@ export function PageStack() {
           e.translationY < -COMMIT_DISTANCE || e.velocityY < -COMMIT_VELOCITY;
         const downCommit =
           e.translationY > COMMIT_DISTANCE || e.velocityY > COMMIT_VELOCITY;
-        const rightCommit =
-          e.translationX > COMMIT_DISTANCE || e.velocityX > COMMIT_VELOCITY;
 
-        const ax = Math.abs(e.translationX);
-        const ay = Math.abs(e.translationY);
-
-        if (upCommit && ay >= ax) {
+        if (upCommit) {
           liftY.value = withTiming(-H, TURN, () => {
             runOnJS(commitAndReset)();
           });
-        } else if (downCommit && ay >= ax) {
+        } else if (downCommit) {
           progress.value = withTiming(1, TURN, () => {
             runOnJS(commitAndArchive)();
           });
-        } else if (rightCommit && ax > ay) {
-          settingsX.value = withTiming(1, SETTINGS);
         } else {
           progress.value = withTiming(0, SNAP);
           liftY.value = withTiming(0, SNAP);
-          settingsX.value = withTiming(0, SNAP);
         }
       } else {
         const upCommit =
@@ -230,7 +211,7 @@ export function PageStack() {
   return (
     <View style={styles.root}>
       <GestureDetector gesture={pan}>
-        <View style={styles.root} collapsable={false}>
+        <Animated.View style={styles.root} collapsable={false}>
           <View style={styles.layer} pointerEvents={layer === "archive" ? "auto" : "none"}>
             <ArchiveContent />
           </View>
@@ -244,15 +225,21 @@ export function PageStack() {
               draft={draft}
               onChangeDraft={setDraft}
               onAppendDraft={appendDraft}
+              onOpenSettings={() => setSettingsOpen(true)}
             />
           </Animated.View>
 
           {layer === "capture" ? (
             <GestureAffordances dominantDirection={dominantDirection} />
-          ) : null}
+          ) : (
+            <ArchiveReturnIndicator />
+          )}
 
-          <SettingsSheet progress={settingsX} duration={SETTINGS.duration} />
-        </View>
+          <SettingsSheet
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+          />
+        </Animated.View>
       </GestureDetector>
     </View>
   );
