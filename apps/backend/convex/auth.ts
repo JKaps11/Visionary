@@ -12,4 +12,27 @@ import { convexAuth } from "@convex-dev/auth/server";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [Google],
+  callbacks: {
+    async redirect({ redirectTo }) {
+      // Allow the mobile app's custom URL scheme.
+      if (redirectTo.startsWith("visionary://")) {
+        return redirectTo;
+      }
+      // Default: allow relative paths and same-origin URLs.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const siteUrl = ((globalThis as any).process.env.SITE_URL as string).replace(/\/$/, "");
+      if (
+        redirectTo.startsWith("?") ||
+        redirectTo.startsWith("/") ||
+        redirectTo.startsWith(siteUrl)
+      ) {
+        return redirectTo.startsWith(siteUrl)
+          ? redirectTo
+          : `${siteUrl}${redirectTo}`;
+      }
+      throw new Error(
+        `Invalid \`redirectTo\` ${redirectTo} for configured SITE_URL: ${siteUrl}`,
+      );
+    },
+  },
 });

@@ -8,9 +8,6 @@ import type { Id } from "@visionary/backend/convex/_generated/dataModel";
 
 import { Colors, Fonts, Spacing } from "@/constants/theme";
 
-// ThoughtDetail — full-screen read view of a single thought. No edit button,
-// no delete. Thoughts are immutable once captured.
-
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleString(undefined, {
     weekday: "long",

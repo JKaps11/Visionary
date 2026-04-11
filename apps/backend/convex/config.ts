@@ -11,8 +11,10 @@ import { mutation, query } from "./_generated/server";
 // outside the supported set.
 const AccentColor = v.union(
   v.literal("#B39CD0"),
-  v.literal("#FFC1CC"),
-  v.literal("#A8DADC"),
+  v.literal("#9CB4D0"),
+  v.literal("#9CD0B3"),
+  v.literal("#D0C49C"),
+  v.literal("#D09CB8"),
 );
 
 async function requireUserId(ctx: { auth: any }) {

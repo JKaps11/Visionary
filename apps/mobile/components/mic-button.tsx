@@ -8,7 +8,7 @@ import {
 } from "expo-audio";
 import { File } from "expo-file-system";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Svg, { Path, Rect } from "react-native-svg";
 
@@ -16,14 +16,13 @@ import { api } from "@visionary/backend/convex/_generated/api";
 
 import { VoiceWaveform } from "@/components/voice-waveform";
 import { useAccent } from "@/context/accent";
-
-// MicButton — quiet at rest, transforms into the VoiceWaveform while
-// recording. The recorded clip is sent to the Convex `deepgram.transcribe`
-// action and the resulting text is appended to the editor draft via
-// `onAppendText`.
+import { Colors } from "@/constants/theme";
 
 const SIZE = 44;
 const ICON = 22;
+const METER_INTERVAL_MS = 80;
+const METER_DB_FLOOR = -50;
+const METER_DB_SILENT = -160;
 
 export interface MicButtonProps {
   onAppendText?: (text: string) => void;
@@ -41,17 +40,14 @@ export function MicButton({ onAppendText }: MicButtonProps) {
   const level = useSharedValue(0);
   const stoppedRef = useRef(false);
 
-  // Poll the recorder for metering values and write into the shared value
-  // that drives the waveform. The status callback only fires on lifecycle
-  // events; metering lives on the polled state.
   useEffect(() => {
     if (!recording) return;
     const id = setInterval(() => {
       const state = recorder.getStatus();
-      const db = state.metering ?? -160;
-      const norm = Math.max(0, Math.min(1, (db + 50) / 50));
+      const db = state.metering ?? METER_DB_SILENT;
+      const norm = Math.max(0, Math.min(1, (db - METER_DB_FLOOR) / -METER_DB_FLOOR));
       level.value = norm;
-    }, 80);
+    }, METER_INTERVAL_MS);
     return () => clearInterval(id);
   }, [level, recorder, recording]);
 
@@ -59,6 +55,7 @@ export function MicButton({ onAppendText }: MicButtonProps) {
     if (recording || busy) return;
     const perm = await requestRecordingPermissionsAsync();
     if (!perm.granted) return;
+    Keyboard.dismiss();
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     void activateKeepAwakeAsync("voice-capture");
     stoppedRef.current = false;
@@ -97,7 +94,6 @@ export function MicButton({ onAppendText }: MicButtonProps) {
       if (uri) {
         const file = new File(uri);
         const buffer = await file.arrayBuffer();
-        // m4a/aac on both platforms via HIGH_QUALITY preset.
         const text = await transcribe({
           audio: buffer,
           mimeType: "audio/mp4",
@@ -114,8 +110,6 @@ export function MicButton({ onAppendText }: MicButtonProps) {
     }
   }, [level, onAppendText, recorder, recording, transcribe]);
 
-  // While recording, a transparent full-screen Pressable swallows touches so
-  // any tap stops the recording.
   return (
     <>
       {recording ? (
@@ -139,7 +133,10 @@ export function MicButton({ onAppendText }: MicButtonProps) {
             disabled={busy}
             style={({ pressed }) => [
               styles.button,
-              { opacity: busy ? 0.3 : pressed ? 0.5 : 0.6 },
+              {
+                backgroundColor: accent,
+                opacity: busy ? 0.3 : pressed ? 0.7 : 1,
+              },
             ]}
             hitSlop={16}
           >
@@ -150,20 +147,20 @@ export function MicButton({ onAppendText }: MicButtonProps) {
                 width={6}
                 height={11}
                 rx={3}
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 fill="none"
               />
               <Path
                 d="M5 11a7 7 0 0 0 14 0"
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 fill="none"
               />
               <Path
                 d="M12 18v3"
-                stroke={accent}
+                stroke={Colors.text}
                 strokeWidth={1.5}
                 strokeLinecap="round"
               />
@@ -184,6 +181,7 @@ const styles = StyleSheet.create({
   button: {
     width: SIZE,
     height: SIZE,
+    borderRadius: SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
   },

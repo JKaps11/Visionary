@@ -1,16 +1,16 @@
-// Visionary theme. One background, one ink, one accent, one font.
-// Values come straight from about/mobile_design.md.
-
 export const Colors = {
   background: "#2C2C2C",
   text: "#E4E4E4",
-  // Dimmed text for day labels, metadata, etc.
   textMuted: "#888888",
 };
 
-// Accent palette. The user picks one from the settings sheet.
-// First entry is the v1 default until settings are wired up.
-export const AccentPalette = ["#B39CD0", "#FFC1CC", "#A8DADC"] as const;
+export const AccentPalette = [
+  "#B39CD0", // lavender
+  "#9CB4D0", // dusty blue
+  "#9CD0B3", // sage green
+  "#D0C49C", // warm sand
+  "#D09CB8", // muted rose
+] as const;
 export type Accent = (typeof AccentPalette)[number];
 export const DefaultAccent: Accent = AccentPalette[0];
 

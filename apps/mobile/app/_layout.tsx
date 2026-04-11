@@ -14,8 +14,6 @@ import { AccentProvider } from "@/context/accent";
 import { secureStorage } from "@/lib/secure-storage";
 import { Colors } from "@/constants/theme";
 
-// CONVEX_URL is read from app.json `extra.convexUrl` or from
-// EXPO_PUBLIC_CONVEX_URL at build time.
 const CONVEX_URL =
   (Constants.expoConfig?.extra?.convexUrl as string | undefined) ??
   process.env.EXPO_PUBLIC_CONVEX_URL ??
@@ -51,11 +49,8 @@ export default function RootLayout() {
   );
 }
 
-// Resolves auth state, redirects between /sign-in and /, and only mounts the
-// route Stack once auth is known. Mounting the Stack unconditionally would let
-// the protected index route (PageStack with its AppState commit listener) run
-// before auth is resolved and fire createThought() against an unauthenticated
-// session.
+// Mounting the route Stack unconditionally would let the protected index route
+// (PageStack's AppState commit listener) fire createThought() before auth resolves.
 function AuthGate() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const router = useRouter();
